@@ -170,7 +170,7 @@ object PokemonMock {
                 PokemonStat("defense", 90),
                 PokemonStat("special-attack", 154),
                 PokemonStat("special-defense", 90),
-                PokemonStat("speed", 180)
+                PokemonStat("speed", 172)
             ),
             description = "Um Pokémon criado por manipulação genética. É considerado o mais feroz entre os Pokémons."
         )
