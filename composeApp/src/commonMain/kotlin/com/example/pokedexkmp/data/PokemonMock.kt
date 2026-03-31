@@ -104,6 +104,75 @@ object PokemonMock {
                 PokemonStat("speed", 55)
             ),
             description = "Eevee possui uma estrutura genética instável e várias evoluções possíveis."
+        ),
+
+        Pokemon(
+            id = 16,
+            name = "pidgey",
+            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/16.png",
+            types = listOf("normal", "flying"),
+            height = 3,
+            weight = 18,
+            stats = listOf(
+                PokemonStat("hp", 40),
+                PokemonStat("attack", 45),
+                PokemonStat("defense", 40),
+                PokemonStat("special-attack", 35),
+                PokemonStat("special-defense", 35),
+                PokemonStat("speed", 56)
+            ),
+            description = "Muito comum em florestas. Ele bate as asas no chão para levantar areia ofuscante."
+        ),
+        Pokemon(
+            id = 94,
+            name = "gengar",
+            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png",
+            types = listOf("ghost", "poison"),
+            height = 15,
+            weight = 405,
+            stats = listOf(
+                PokemonStat("hp", 60),
+                PokemonStat("attack", 65),
+                PokemonStat("defense", 60),
+                PokemonStat("special-attack", 130),
+                PokemonStat("special-defense", 75),
+                PokemonStat("speed", 110)
+            ),
+            description = "Diz-se que ele emerge da escuridão para roubar a alma daqueles que se perdem nas montanhas."
+        ),
+        Pokemon(
+            id = 143,
+            name = "snorlax",
+            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png",
+            types = listOf("normal"),
+            height = 21,
+            weight = 4600,
+            stats = listOf(
+                PokemonStat("hp", 160),
+                PokemonStat("attack", 110),
+                PokemonStat("defense", 65),
+                PokemonStat("special-attack", 65),
+                PokemonStat("special-defense", 110),
+                PokemonStat("speed", 30)
+            ),
+            description = "Seu estômago pode digerir qualquer tipo de comida, até mesmo comida mofada ou podre."
+        ),
+        Pokemon(
+            id = 150,
+            name = "mewtwo",
+            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/150.png",
+            types = listOf("psychic"),
+            height = 20,
+            weight = 1220,
+            stats = listOf(
+                PokemonStat("hp", 106),
+                PokemonStat("attack", 110),
+                PokemonStat("defense", 90),
+                PokemonStat("special-attack", 154),
+                PokemonStat("special-defense", 90),
+                PokemonStat("speed", 130)
+            ),
+            description = "Um Pokémon criado por manipulação genética. É considerado o mais feroz entre os Pokémons."
         )
     )
 
