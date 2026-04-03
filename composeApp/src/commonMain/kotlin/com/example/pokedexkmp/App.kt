@@ -47,7 +47,7 @@ fun App() {
                                 restoreState = true
                             }
                         },
-                        label = { Text("Pokedex") },
+                        label = { Text("Pokédex") },
                         icon = { Text("📋") }
                     )
 

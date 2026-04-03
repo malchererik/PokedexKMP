@@ -3,7 +3,7 @@ package com.example.pokedexkmp.navigation
 import kotlinx.serialization.Serializable
 
 @Serializable
-object HomeRoute
+object TeamRoute
 
 @Serializable
 object PokedexRoute
