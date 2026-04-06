@@ -6,7 +6,7 @@ object PokemonMock {
         Pokemon(
             id = 1,
             name = "bulbasaur",
-            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png",
+            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png",
             types = listOf("grass", "poison"),
             height = 7,
             weight = 69,
@@ -23,7 +23,7 @@ object PokemonMock {
         Pokemon(
             id = 4,
             name = "charmander",
-            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png",
+            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/4.png",
             types = listOf("fire"),
             height = 6,
             weight = 85,
@@ -40,7 +40,7 @@ object PokemonMock {
         Pokemon(
             id = 7,
             name = "squirtle",
-            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png",
+            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/7.png",
             types = listOf("water"),
             height = 5,
             weight = 90,
@@ -57,7 +57,7 @@ object PokemonMock {
         Pokemon(
             id = 25,
             name = "pikachu",
-            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png",
+            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png",
             types = listOf("electric"),
             height = 4,
             weight = 60,
@@ -74,7 +74,7 @@ object PokemonMock {
         Pokemon(
             id = 39,
             name = "jigglypuff",
-            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/39.png",
+            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/39.png",
             types = listOf("normal", "fairy"),
             height = 5,
             weight = 55,
@@ -91,7 +91,7 @@ object PokemonMock {
         Pokemon(
             id = 133,
             name = "eevee",
-            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/133.png",
+            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/133.png",
             types = listOf("normal"),
             height = 3,
             weight = 65,
@@ -105,11 +105,10 @@ object PokemonMock {
             ),
             description = "Eevee possui uma estrutura genética instável e várias evoluções possíveis."
         ),
-
         Pokemon(
             id = 16,
             name = "pidgey",
-            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/16.png",
+            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/16.png",
             types = listOf("normal", "flying"),
             height = 3,
             weight = 18,
@@ -126,7 +125,7 @@ object PokemonMock {
         Pokemon(
             id = 94,
             name = "gengar",
-            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png",
+            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png",
             types = listOf("ghost", "poison"),
             height = 15,
             weight = 405,
@@ -143,7 +142,7 @@ object PokemonMock {
         Pokemon(
             id = 143,
             name = "snorlax",
-            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png",
+            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/143.png",
             types = listOf("normal"),
             height = 21,
             weight = 4600,
@@ -160,7 +159,7 @@ object PokemonMock {
         Pokemon(
             id = 150,
             name = "mewtwo",
-            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/150.png",
+            imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/150.png",
             types = listOf("psychic"),
             height = 20,
             weight = 1220,
