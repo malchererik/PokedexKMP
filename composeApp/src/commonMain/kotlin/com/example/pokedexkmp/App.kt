@@ -14,10 +14,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.pokedexkmp.data.Pokemon
-import com.example.pokedexkmp.data.PokemonMock
 import com.example.pokedexkmp.navigation.PokedexRoute
 import com.example.pokedexkmp.navigation.PokemonDetailRoute
 import com.example.pokedexkmp.navigation.TeamRoute
+import com.example.pokedexkmp.repository.PokemonRepositoryImpl
 import com.example.pokedexkmp.ui.PokedexGridScreen
 import com.example.pokedexkmp.ui.PokemonDetailScreen
 import com.example.pokedexkmp.ui.TeamScreen
@@ -31,6 +31,9 @@ fun App() {
 
         // A Mochila do Time
         val myTeam = remember { mutableStateListOf<Pokemon>() }
+
+        // Instância do Repositório (Injeção de Dependência Simples)
+        val pokemonRepository = remember { PokemonRepositoryImpl() }
 
         Scaffold(
             bottomBar = {
@@ -71,7 +74,7 @@ fun App() {
 
                     composable<PokedexRoute> {
                         PokedexGridScreen(
-                            pokemons = PokemonMock.pokedex,
+                            pokemons = pokemonRepository.getPokemonList(), // Usa o repositório!
                             onPokemonClick = { pokemonId ->
                                 navController.navigate(PokemonDetailRoute(pokemonId))
                             },
@@ -81,7 +84,6 @@ fun App() {
                                     myTeam.add(pokemon)
                                 }
                             },
-                            // NOVO: Verifica se o Pokémon já está no time
                             isPokemonInTeam = { pokemonId ->
                                 myTeam.any { it.id == pokemonId }
                             }
@@ -90,7 +92,7 @@ fun App() {
 
                     composable<PokemonDetailRoute> { backStackEntry ->
                         val route = backStackEntry.toRoute<PokemonDetailRoute>()
-                        val pokemon = PokemonMock.findById(route.pokemonId)
+                        val pokemon = pokemonRepository.getPokemonById(route.pokemonId) // Usa o repositório!
 
                         PokemonDetailScreen(
                             pokemon = pokemon,
@@ -100,7 +102,6 @@ fun App() {
                                     myTeam.add(p)
                                 }
                             },
-                            // NOVO: Verifica se o Pokémon já está no time
                             isPokemonInTeam = { pokemonId ->
                                 myTeam.any { it.id == pokemonId }
                             }
