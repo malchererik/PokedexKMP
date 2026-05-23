@@ -13,7 +13,7 @@ interface PokemonRepository {
 
 class PokemonRepositoryImpl(
     private val database: AppDatabase
-) : PokemonRepository { // <-- O erro sumirá quando você adicionar ": PokemonRepository" aqui
+) : PokemonRepository {
 
     override fun getPokemonList(): List<Pokemon> {
 
