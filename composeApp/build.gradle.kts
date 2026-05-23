@@ -7,6 +7,10 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
+
+    // Plugins do Banco de Dados
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.room)
 }
 
 kotlin {
@@ -15,7 +19,7 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
     listOf(
         iosArm64(),
         iosSimulatorArm64()
@@ -25,12 +29,11 @@ kotlin {
             isStatic = true
         }
     }
-    
+
     sourceSets {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
-
             implementation("io.ktor:ktor-client-okhttp:3.0.0")
         }
         iosMain.dependencies {
@@ -47,9 +50,13 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.2")
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
-
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
             implementation("io.coil-kt.coil3:coil-compose:3.0.4")
             implementation("io.coil-kt.coil3:coil-network-ktor3:3.0.4")
+
+            // DEPENDÊNCIAS DO BANCO DE DADOS (ROOM KMP)
+            implementation(libs.room.runtime)
+            implementation(libs.sqlite.bundled)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -86,5 +93,14 @@ android {
 
 dependencies {
     debugImplementation(libs.compose.uiTooling)
+
+    // PREPARA O COMPILADOR DE BANCO DE DADOS PARA TODAS AS PLATAFORMAS
+    add("kspAndroid", libs.room.compiler)
+    add("kspIosSimulatorArm64", libs.room.compiler)
+    add("kspIosArm64", libs.room.compiler)
+    add("kspCommonMainMetadata", libs.room.compiler) // A LINHA QUE FALTAVA!
 }
 
+room {
+    schemaDirectory("$projectDir/schemas")
+}
