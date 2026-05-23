@@ -1,30 +1,40 @@
 package com.example.pokedexkmp.repository
 
 import com.example.pokedexkmp.data.Pokemon
-import com.example.pokedexkmp.data.PokemonMock
-import com.example.pokedexkmp.data.getPlatformExclusivePokemons
+import com.example.pokedexkmp.database.AppDatabase
+import com.example.pokedexkmp.database.PokemonCacheEntity // Importa a entidade
+import kotlinx.coroutines.flow.first // Usaremos isso para ler o banco de forma síncrona
+import kotlinx.coroutines.runBlocking
 
-/**
- * Interface que define o contrato de dados.
- * A UI apenas conhece estas funções, não sabe de onde vêm os dados.
- */
 interface PokemonRepository {
     fun getPokemonList(): List<Pokemon>
     fun getPokemonById(id: Int): Pokemon?
 }
 
-/**
- * Implementação do repositório que simula o acesso a uma base de dados ou API
- */
-class PokemonRepositoryImpl : PokemonRepository {
+class PokemonRepositoryImpl(
+    private val database: AppDatabase
+) : PokemonRepository { // <-- O erro sumirá quando você adicionar ": PokemonRepository" aqui
 
     override fun getPokemonList(): List<Pokemon> {
-        // Junta os Pokémons normais com os exclusivos (vazio no Android, 4 Lendários no iOS)
-        return PokemonMock.pokedex + getPlatformExclusivePokemons()
+
+        return runBlocking {
+            database.pokemonDao().getCache().first().map { entity ->
+                Pokemon(
+                    id = entity.id,
+                    name = entity.name,
+                    imageUrl = entity.imageUrl,
+                    types = emptyList(), // Ajustaremos conforme sua entidade
+                    height = 0,
+                    weight = 0,
+                    stats = emptyList(),
+                    description = ""
+                )
+            }
+        }
     }
 
     override fun getPokemonById(id: Int): Pokemon? {
-        // Procura o Pokémon dentro da lista completa (incluindo lendários)
+        // Função específica: Busca apenas um ID no banco
         return getPokemonList().firstOrNull { it.id == id }
     }
 }
