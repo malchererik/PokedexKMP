@@ -21,7 +21,7 @@ fun PokemonDetailScreen(
     pokemon: Pokemon?,
     onBackClick: () -> Unit,
     onAddToTeam: (Pokemon) -> Unit,
-    isPokemonInTeam: (Int) -> Boolean // NOVO PARÂMETRO
+    isPokemonInTeam: (Int) -> Boolean
 ) {
     if (pokemon == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Pokémon não encontrado.") }

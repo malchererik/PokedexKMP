@@ -53,12 +53,12 @@ fun PokedexGridScreen(
             modifier = Modifier.padding(top = 24.dp, bottom = 8.dp)
         )
 
-        // SearchBar corrigida para não cobrir a tela!
+
         SearchBar(
             query = searchQuery,
             onQueryChange = { searchQuery = it },
             onSearch = { }, // Não precisa fazer nada, o filtro é em tempo real
-            active = false, // O SEGREDO ESTÁ AQUI: Impede a barra de cobrir a tela inteira!
+            active = false, //Impede a barra de cobrir a tela inteira!
             onActiveChange = { },
             placeholder = { Text("Buscar por nome ou número...") },
             leadingIcon = { Text("🔍", fontSize = 18.sp, modifier = Modifier.padding(start = 12.dp)) },
@@ -80,7 +80,7 @@ fun PokedexGridScreen(
             shape = RoundedCornerShape(12.dp),
             colors = SearchBarDefaults.colors(containerColor = Color.White)
         ) {
-            // Deixamos vazio pois o active é sempre false
+
         }
 
         // Grid utilizando a lista filtrada
