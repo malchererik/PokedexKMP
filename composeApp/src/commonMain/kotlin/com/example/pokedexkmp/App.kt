@@ -14,6 +14,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.pokedexkmp.data.Pokemon
+import com.example.pokedexkmp.database.AppDatabase
 import com.example.pokedexkmp.navigation.PokedexRoute
 import com.example.pokedexkmp.navigation.PokemonDetailRoute
 import com.example.pokedexkmp.navigation.TeamRoute
@@ -21,9 +22,8 @@ import com.example.pokedexkmp.repository.PokemonRepositoryImpl
 import com.example.pokedexkmp.ui.PokedexGridScreen
 import com.example.pokedexkmp.ui.PokemonDetailScreen
 import com.example.pokedexkmp.ui.TeamScreen
-
 @Composable
-fun App() {
+fun App(database: AppDatabase){
     MaterialTheme {
         val navController = rememberNavController()
         val navBackStackEntry by navController.currentBackStackEntryAsState()
