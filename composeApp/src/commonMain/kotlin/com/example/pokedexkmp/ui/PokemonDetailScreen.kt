@@ -4,7 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.pokedexkmp.data.Pokemon
+import com.example.pokedexkmp.data.PokeApiClient
+import com.example.pokedexkmp.data.PokemonStat
 
 @Composable
 fun PokemonDetailScreen(
@@ -23,14 +25,60 @@ fun PokemonDetailScreen(
     onAddToTeam: (Pokemon) -> Unit,
     isPokemonInTeam: (Int) -> Boolean
 ) {
-    if (pokemon == null) {
+    // Variáveis de Estado para a API
+    var pokemonApi by remember { mutableStateOf<Pokemon?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+    val apiClient = remember { PokeApiClient() }
+
+    // Efeito que roda assim que a tela abre
+    LaunchedEffect(pokemon?.id) {
+        if (pokemon != null) {
+            isLoading = true
+            try {
+                // Requisição Ktor em Tempo Real!
+                val apiData = apiClient.getPokemonDetails(pokemon.id)
+
+                // Conversão dos dados da internet para o nosso modelo
+                pokemonApi = Pokemon(
+                    id = apiData.id,
+                    name = apiData.name,
+                    imageUrl = apiData.sprites.other?.officialArtwork?.frontDefault ?: pokemon.imageUrl,
+                    types = apiData.types.map { it.type.name },
+                    height = apiData.height,
+                    weight = apiData.weight,
+                    stats = apiData.stats.map { PokemonStat(it.stat.name, it.baseStat) },
+                    description = "Dados extraídos em Tempo Real da PokeAPI!"
+                )
+            } catch (e: Exception) {
+                println("Erro ao carregar da API: ${e.message}")
+                pokemonApi = pokemon // Se falhar, usa os dados antigos
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
+    val currentPokemon = pokemonApi ?: pokemon
+
+    if (currentPokemon == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Pokémon não encontrado.") }
         return
     }
 
-    val mainColor = getPokemonTypeColor(pokemon.types.firstOrNull() ?: "normal")
-    // Verifica se este Pokémon atual já está no time
-    val isInTeam = isPokemonInTeam(pokemon.id)
+    // Tela de Carregamento
+    if (isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator(color = Color(0xFFE57373))
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Buscando na PokeAPI...")
+            }
+        }
+        return
+    }
+
+    val mainColor = getPokemonTypeColor(currentPokemon.types.firstOrNull() ?: "normal")
+    val isInTeam = isPokemonInTeam(currentPokemon.id)
 
     Column(modifier = Modifier.fillMaxSize().background(mainColor)) {
         Row(
@@ -42,7 +90,7 @@ fun PokemonDetailScreen(
         }
 
         Box(modifier = Modifier.fillMaxWidth().height(250.dp), contentAlignment = Alignment.Center) {
-            AsyncImage(model = pokemon.imageUrl, contentDescription = pokemon.name, modifier = Modifier.size(220.dp))
+            AsyncImage(model = currentPokemon.imageUrl, contentDescription = currentPokemon.name, modifier = Modifier.size(220.dp))
         }
 
         Surface(
@@ -52,15 +100,15 @@ fun PokemonDetailScreen(
         ) {
             Column(modifier = Modifier.padding(24.dp).fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(bottom = 8.dp)) {
-                    Text(text = pokemon.id.formatPokemonNumber(), fontWeight = FontWeight.Bold, color = Color.Gray)
-                    Text(text = "H: ${pokemon.height / 10.0} m", color = Color.Gray)
-                    Text(text = "W: ${pokemon.weight / 10.0} kg", color = Color.Gray)
+                    Text(text = currentPokemon.id.formatPokemonNumber(), fontWeight = FontWeight.Bold, color = Color.Gray)
+                    Text(text = "H: ${currentPokemon.height / 10.0} m", color = Color.Gray)
+                    Text(text = "W: ${currentPokemon.weight / 10.0} kg", color = Color.Gray)
                 }
 
-                Text(text = pokemon.name.capitalizePokemonName(), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+                Text(text = currentPokemon.name.capitalizePokemonName(), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(vertical = 12.dp)) {
-                    pokemon.types.forEach { type ->
+                    currentPokemon.types.forEach { type ->
                         Box(modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(getPokemonTypeColor(type)).padding(horizontal = 16.dp, vertical = 6.dp)) {
                             Text(text = translateType(type), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         }
@@ -71,7 +119,7 @@ fun PokemonDetailScreen(
 
                 Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFF5F5F5), RoundedCornerShape(16.dp)).padding(16.dp)) {
                     Text("Status Base", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(bottom = 8.dp))
-                    pokemon.stats.forEach { stat ->
+                    currentPokemon.stats.forEach { stat ->
                         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text(text = translateStat(stat.name), modifier = Modifier.weight(0.25f), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                             Text(text = stat.value.toString(), modifier = Modifier.weight(0.15f), fontSize = 14.sp, textAlign = TextAlign.End)
@@ -86,20 +134,19 @@ fun PokemonDetailScreen(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(text = pokemon.description, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center, color = Color.DarkGray)
+                Text(text = currentPokemon.description, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center, color = Color.DarkGray)
                 Spacer(modifier = Modifier.weight(1f))
 
-                // BOTÃO ALTERADO AQUI!
                 Button(
-                    onClick = { if (!isInTeam) onAddToTeam(pokemon) },
+                    onClick = { if (!isInTeam) onAddToTeam(currentPokemon) },
                     modifier = Modifier.fillMaxWidth().height(50.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isInTeam) Color.Gray else mainColor // Fica cinza se adicionado
+                        containerColor = if (isInTeam) Color.Gray else mainColor
                     ),
                     shape = RoundedCornerShape(25.dp)
                 ) {
                     Text(
-                        text = if (isInTeam) "ADICIONADO" else "ADICIONAR AO TIME", // Muda o texto
+                        text = if (isInTeam) "ADICIONADO" else "ADICIONAR AO TIME",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )

@@ -1,40 +1,50 @@
 package com.example.pokedexkmp.repository
 
+import com.example.pokedexkmp.data.PokeApiClient
 import com.example.pokedexkmp.data.Pokemon
 import com.example.pokedexkmp.database.AppDatabase
-import com.example.pokedexkmp.database.PokemonCacheEntity // Importa a entidade
-import kotlinx.coroutines.flow.first // Usaremos isso para ler o banco de forma síncrona
-import kotlinx.coroutines.runBlocking
-
-interface PokemonRepository {
-    fun getPokemonList(): List<Pokemon>
-    fun getPokemonById(id: Int): Pokemon?
-}
+import com.example.pokedexkmp.database.PokemonCacheEntity
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class PokemonRepositoryImpl(
     private val database: AppDatabase
-) : PokemonRepository {
+) {
+    private val apiClient = PokeApiClient()
 
-    override fun getPokemonList(): List<Pokemon> {
+    suspend fun syncPokemonsIfEmpty() {
+        val count = database.pokemonDao().getCacheCount()
+        if (count == 0) { // Se o banco estiver vazio...
+            val apiResponse = apiClient.getPokemonList(150)
 
-        return runBlocking {
-            database.pokemonDao().getCache().first().map { entity ->
+            val entities = apiResponse.results.mapNotNull { resource ->
+                // Extrai o ID da URL que a PokeAPI devolve
+                val id = resource.url.trimEnd('/').substringAfterLast('/').toIntOrNull() ?: return@mapNotNull null
+                val imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png"
+
+                PokemonCacheEntity(id = id, name = resource.name, imageUrl = imageUrl)
+            }
+
+            database.pokemonDao().insertCache(entities) // !
+        }
+    }
+
+    //Lê do Banco de Dados em Tempo Real (Flow)
+    fun getPokemonListFlow(): Flow<List<Pokemon>> {
+        return database.pokemonDao().getCache().map { entities ->
+            entities.map { entity ->
                 Pokemon(
                     id = entity.id,
                     name = entity.name,
                     imageUrl = entity.imageUrl,
-                    types = emptyList(), // Ajustaremos conforme sua entidade
-                    height = 0,
-                    weight = 0,
-                    stats = emptyList(),
-                    description = ""
+                    types = emptyList(), height = 0, weight = 0, stats = emptyList(), description = ""
                 )
             }
         }
     }
 
-    override fun getPokemonById(id: Int): Pokemon? {
-        // Função específica: Busca apenas um ID no banco
-        return getPokemonList().firstOrNull { it.id == id }
+    // Busca apenas 1 do banco para a tela de detalhes
+    suspend fun getPokemonById(id: Int): Pokemon? {
+        return null
     }
 }
