@@ -35,7 +35,7 @@ fun getStatColor(statName: String): Color {
     }
 }
 
-// NOVO: Função para traduzir os tipos para o Português
+// Função para traduzir os tipos para o Português
 fun translateType(type: String): String {
     return when (type.lowercase()) {
         "grass" -> "PLANTA"
@@ -52,7 +52,7 @@ fun translateType(type: String): String {
     }
 }
 
-// NOVO: Função para traduzir as barrinhas de status
+// Função para traduzir as barrinhas de status
 fun translateStat(stat: String): String {
     return when (stat.lowercase()) {
         "hp" -> "HP"
