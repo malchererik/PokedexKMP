@@ -30,7 +30,7 @@ fun PokedexGridScreen(
     onAddToTeam: (Pokemon) -> Unit,
     isPokemonInTeam: (Int) -> Boolean,
     onSearch: (String) -> Unit,
-    onLoadMore: () -> Unit // NOVO: A tela agora pode pedir mais dados!
+    onLoadMore: () -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
     val gridState = rememberLazyGridState()
@@ -39,8 +39,8 @@ fun PokedexGridScreen(
     LaunchedEffect(gridState) {
         snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
             .distinctUntilChanged()
-            .filter { lastIndex -> lastIndex != null && lastIndex >= pokemons.size - 4 } // Quando faltar 4 itens para o fim
-            .collect { onLoadMore() } // Chama a função para baixar a próxima página
+            .filter { lastIndex -> lastIndex != null && lastIndex >= pokemons.size - 4 }
+            .collect { onLoadMore() }
     }
 
     Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF5F5F5))) {
@@ -48,7 +48,15 @@ fun PokedexGridScreen(
             modifier = Modifier.fillMaxWidth().background(Color(0xFFE57373)).padding(top = 40.dp, bottom = 16.dp, start = 16.dp, end = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBackClick) { Text("⬅️", fontSize = 24.sp) }
+            // CORREÇÃO: A seta de voltar agora limpa a pesquisa se ela estiver ativa!
+            IconButton(onClick = {
+                if (searchQuery.isNotEmpty()) {
+                    searchQuery = "" // Limpa o texto da tela
+                    onSearch("")     // Avisa o banco de dados para trazer todos de volta
+                } else {
+                    onBackClick()
+                }
+            }) { Text("⬅️", fontSize = 24.sp) }
             Text("POKÉDEX", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp, modifier = Modifier.padding(start = 16.dp))
         }
 
@@ -62,6 +70,16 @@ fun PokedexGridScreen(
             placeholder = { Text("Buscar Pokémon no Banco...") },
             shape = RoundedCornerShape(25.dp),
             singleLine = true,
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = {
+                        searchQuery = ""
+                        onSearch("")
+                    }) {
+                        Text("❌", fontSize = 14.sp)
+                    }
+                }
+            },
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedBorderColor = Color(0xFFE57373)
             )
@@ -69,7 +87,7 @@ fun PokedexGridScreen(
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
-            state = gridState, // Liga a lista ao nosso "Olheiro"
+            state = gridState,
             modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {

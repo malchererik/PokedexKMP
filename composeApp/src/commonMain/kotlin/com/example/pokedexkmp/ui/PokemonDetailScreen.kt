@@ -2,6 +2,8 @@ package com.example.pokedexkmp.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState // NOVO IMPORT PARA O SCROLL
+import androidx.compose.foundation.verticalScroll // NOVO IMPORT PARA O SCROLL
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,7 +24,7 @@ import com.example.pokedexkmp.data.PokemonStat
 fun PokemonDetailScreen(
     pokemon: Pokemon?,
     onBackClick: () -> Unit,
-    onAddToTeam: (Pokemon, String) -> Unit, // MUDADO: Agora recebe também a String da localização
+    onAddToTeam: (Pokemon, String) -> Unit,
     isPokemonInTeam: (Int) -> Boolean
 ) {
     var pokemonApi by remember { mutableStateOf<Pokemon?>(null) }
@@ -77,7 +79,7 @@ fun PokemonDetailScreen(
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Onde você encontrou o ${currentPokemon.name.capitalizePokemonName()}?") },
+            title = { Text("Onde você encontrou o ${currentPokemon.name.replaceFirstChar { it.uppercase() }}?") },
             text = {
                 OutlinedTextField(
                     value = captureLocation,
@@ -90,7 +92,7 @@ fun PokemonDetailScreen(
                 Button(
                     onClick = {
                         if (captureLocation.isNotBlank()) {
-                            onAddToTeam(currentPokemon, captureLocation) // MUDADO: novo local de salvamento
+                            onAddToTeam(currentPokemon, captureLocation)
                             showDialog = false
                         }
                     },
@@ -128,14 +130,21 @@ fun PokemonDetailScreen(
             shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
             color = MaterialTheme.colorScheme.surface
         ) {
-            Column(modifier = Modifier.padding(24.dp).fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+            // A MÁGICA ESTÁ AQUI: Transformamos a Coluna numa tela que rola!
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()), // Permite arrastar para baixo!
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(bottom = 8.dp)) {
-                    Text(text = currentPokemon.id.formatPokemonNumber(), fontWeight = FontWeight.Bold, color = Color.Gray)
+                    Text(text = currentPokemon.id.toString().padStart(3, '0'), fontWeight = FontWeight.Bold, color = Color.Gray)
                     Text(text = "H: ${currentPokemon.height / 10.0} m", color = Color.Gray)
                     Text(text = "W: ${currentPokemon.weight / 10.0} kg", color = Color.Gray)
                 }
 
-                Text(text = currentPokemon.name.capitalizePokemonName(), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+                Text(text = currentPokemon.name.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(vertical = 12.dp)) {
                     currentPokemon.types.forEach { type ->
@@ -165,10 +174,12 @@ fun PokemonDetailScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(text = currentPokemon.description, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center, color = Color.DarkGray)
-                Spacer(modifier = Modifier.weight(1f))
+
+                // Removemos o weight(1f) porque ele quebra o Scroll e trocamos por um espaçamento fixo:
+                Spacer(modifier = Modifier.height(32.dp))
 
                 Button(
-                    onClick = { if (!isInTeam) showDialog = true }, // Abre o diálogo
+                    onClick = { if (!isInTeam) showDialog = true },
                     modifier = Modifier.fillMaxWidth().height(50.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isInTeam) Color.Gray else mainColor
