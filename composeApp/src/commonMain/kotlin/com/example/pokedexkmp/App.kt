@@ -110,7 +110,7 @@ fun App(database: AppDatabase) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         CircularProgressIndicator()
                                         Spacer(modifier = Modifier.height(16.dp))
-                                        Text("Sincronizando Banco de Dados...")
+                                        Text("Carregando Pokédex...")
                                     }
                                 }
                             }
@@ -121,7 +121,8 @@ fun App(database: AppDatabase) {
                                     onBackClick = { navController.popBackStack() },
                                     onAddToTeam = { _ -> },
                                     isPokemonInTeam = { pokemonId -> myTeam.any { it.id == pokemonId } },
-                                    onSearch = { query -> viewModel.onSearchQueryChanged(query) }
+                                    onSearch = { query -> viewModel.onSearchQueryChanged(query) },
+                                    onLoadMore = { viewModel.loadMorePokemons() }
                                 )
                             }
                             is PokedexUiState.Error -> {

@@ -23,6 +23,9 @@ interface PokemonDao {
     @Query("SELECT * FROM pokemon_cache LIMIT :limit OFFSET :offset")
     fun getPagedCache(limit: Int, offset: Int): Flow<List<PokemonCacheEntity>>
 
+    @Query("SELECT * FROM pokemon_cache WHERE name LIKE '%' || :searchQuery || '%' LIMIT :limit OFFSET :offset")
+    suspend fun getPokemonsPaged(searchQuery: String, limit: Int, offset: Int): List<PokemonCacheEntity>
+
     // Busca com filtro SQL LIKE
     @Query("SELECT * FROM pokemon_cache WHERE name LIKE '%' || :searchQuery || '%'")
     fun searchPokemonCache(searchQuery: String): Flow<List<PokemonCacheEntity>>

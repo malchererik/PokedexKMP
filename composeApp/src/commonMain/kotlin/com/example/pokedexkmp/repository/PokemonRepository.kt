@@ -11,9 +11,8 @@ import kotlinx.coroutines.flow.map
 interface PokemonRepository {
     suspend fun syncPokemonsIfEmpty()
     fun searchPokemonListFlow(query: String = ""): Flow<List<Pokemon>>
-
-    // NOVO: Função de paginação
     fun getPagedPokemonListFlow(limit: Int, offset: Int): Flow<List<Pokemon>>
+    suspend fun getPokemonsPaged(query: String, limit: Int, offset: Int): List<PokemonCacheEntity>
 }
 
 // 2. A Implementação
@@ -59,5 +58,9 @@ class PokemonRepositoryImpl(
                 )
             }
         }
+    }
+
+    override suspend fun getPokemonsPaged(query: String, limit: Int, offset: Int): List<PokemonCacheEntity> {
+        return database.pokemonDao().getPokemonsPaged(query, limit, offset)
     }
 }
