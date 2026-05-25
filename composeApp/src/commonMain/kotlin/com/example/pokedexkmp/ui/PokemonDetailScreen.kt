@@ -22,25 +22,21 @@ import com.example.pokedexkmp.data.PokemonStat
 fun PokemonDetailScreen(
     pokemon: Pokemon?,
     onBackClick: () -> Unit,
-    onAddToTeam: (Pokemon, String) -> Unit,
+    onAddToTeam: (Pokemon, String) -> Unit, // MUDADO: Agora recebe também a String da localização
     isPokemonInTeam: (Int) -> Boolean
 ) {
-    // Variáveis de Estado para a API
     var pokemonApi by remember { mutableStateOf<Pokemon?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     val apiClient = remember { PokeApiClient() }
+
     var showDialog by remember { mutableStateOf(false) }
     var captureLocation by remember { mutableStateOf("") }
 
-    // Efeito que roda assim que a tela abre
     LaunchedEffect(pokemon?.id) {
         if (pokemon != null) {
             isLoading = true
             try {
-                // Requisição Ktor em Tempo Real!
                 val apiData = apiClient.getPokemonDetails(pokemon.id)
-
-                // Conversão dos dados da internet para o nosso modelo
                 pokemonApi = Pokemon(
                     id = apiData.id,
                     name = apiData.name,
@@ -53,7 +49,7 @@ fun PokemonDetailScreen(
                 )
             } catch (e: Exception) {
                 println("Erro ao carregar da API: ${e.message}")
-                pokemonApi = pokemon // Se falhar, usa os dados antigos
+                pokemonApi = pokemon
             } finally {
                 isLoading = false
             }
@@ -67,7 +63,6 @@ fun PokemonDetailScreen(
         return
     }
 
-    // Tela de Carregamento
     if (isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -77,6 +72,39 @@ fun PokemonDetailScreen(
             }
         }
         return
+    }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Onde você encontrou o ${currentPokemon.name.capitalizePokemonName()}?") },
+            text = {
+                OutlinedTextField(
+                    value = captureLocation,
+                    onValueChange = { captureLocation = it },
+                    label = { Text("Local de Captura") },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (captureLocation.isNotBlank()) {
+                            onAddToTeam(currentPokemon, captureLocation) // MUDADO: novo local de salvamento
+                            showDialog = false
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF81C784))
+                ) {
+                    Text("Adicionar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 
     val mainColor = getPokemonTypeColor(currentPokemon.types.firstOrNull() ?: "normal")
@@ -140,7 +168,7 @@ fun PokemonDetailScreen(
                 Spacer(modifier = Modifier.weight(1f))
 
                 Button(
-                    onClick = { if (!isInTeam) showDialog = true },
+                    onClick = { if (!isInTeam) showDialog = true }, // Abre o diálogo
                     modifier = Modifier.fillMaxWidth().height(50.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isInTeam) Color.Gray else mainColor
@@ -155,30 +183,5 @@ fun PokemonDetailScreen(
                 }
             }
         }
-    }
-    if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            title = { Text("Local de Captura") },
-            text = {
-                OutlinedTextField(
-                    value = captureLocation,
-                    onValueChange = { captureLocation = it },
-                    label = { Text("Onde você o capturou?") },
-                    singleLine = true
-                )
-            },
-            confirmButton = {
-                Button(onClick = {
-                    if (captureLocation.isNotBlank() && pokemon != null) {
-                        onAddToTeam(pokemon, captureLocation)
-                        showDialog = false
-                    }
-                }) { Text("Salvar") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDialog = false }) { Text("Cancelar") }
-            }
-        )
     }
 }

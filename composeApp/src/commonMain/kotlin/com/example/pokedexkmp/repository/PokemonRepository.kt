@@ -14,22 +14,20 @@ class PokemonRepositoryImpl(
 
     suspend fun syncPokemonsIfEmpty() {
         val count = database.pokemonDao().getCacheCount()
-        if (count == 0) { // Se o banco estiver vazio...
+        if (count == 0) {
             val apiResponse = apiClient.getPokemonList(150)
 
             val entities = apiResponse.results.mapNotNull { resource ->
-                // Extrai o ID da URL que a PokeAPI devolve
                 val id = resource.url.trimEnd('/').substringAfterLast('/').toIntOrNull() ?: return@mapNotNull null
                 val imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png"
 
                 PokemonCacheEntity(id = id, name = resource.name, imageUrl = imageUrl)
             }
 
-            database.pokemonDao().insertCache(entities) // !
+            database.pokemonDao().insertCache(entities)
         }
     }
 
-    //Lê do Banco de Dados em Tempo Real (Flow)
     fun getPokemonListFlow(): Flow<List<Pokemon>> {
         return database.pokemonDao().getCache().map { entities ->
             entities.map { entity ->
@@ -37,18 +35,14 @@ class PokemonRepositoryImpl(
                     id = entity.id,
                     name = entity.name,
                     imageUrl = entity.imageUrl,
-                    types = emptyList(), height = 0, weight = 0, stats = emptyList(), description = ""
+                    types = emptyList(), height = 0, weight = 0, stats = emptyList(), description = "",
+                    captureLocation = ""
                 )
             }
         }
     }
 
-    // Busca apenas 1 do banco para a tela de detalhes
     suspend fun getPokemonById(id: Int): Pokemon? {
         return null
-    }
-
-    suspend fun getPokemonsPaged(searchQuery: String, limit: Int, offset: Int): List<PokemonCacheEntity> {
-        return database.pokemonDao().getPokemonsPaged(searchQuery, limit, offset)
     }
 }

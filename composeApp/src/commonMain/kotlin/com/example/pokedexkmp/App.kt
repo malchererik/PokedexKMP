@@ -3,8 +3,6 @@ package com.example.pokedexkmp
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -19,6 +17,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.pokedexkmp.data.Pokemon
 import com.example.pokedexkmp.database.AppDatabase
+import com.example.pokedexkmp.database.TeamPokemonEntity
 import com.example.pokedexkmp.navigation.PokedexRoute
 import com.example.pokedexkmp.navigation.PokemonDetailRoute
 import com.example.pokedexkmp.navigation.TeamRoute
@@ -28,6 +27,7 @@ import com.example.pokedexkmp.repository.PokemonRepositoryImpl
 import com.example.pokedexkmp.ui.PokedexGridScreen
 import com.example.pokedexkmp.ui.PokemonDetailScreen
 import com.example.pokedexkmp.ui.TeamScreen
+import kotlinx.coroutines.launch
 
 @Composable
 fun App(database: AppDatabase) {
@@ -36,8 +36,22 @@ fun App(database: AppDatabase) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination
 
-        val myTeam = remember { mutableStateListOf<Pokemon>() }
         val pokemonRepository = remember { PokemonRepositoryImpl(database) }
+        val coroutineScope = rememberCoroutineScope()
+
+        // Escuta os favoritos do Room em tempo real!
+        val teamEntities by database.pokemonDao().getTeam().collectAsState(initial = emptyList())
+        val myTeam = remember(teamEntities) {
+            teamEntities.map { entity ->
+                Pokemon(
+                    id = entity.id,
+                    name = entity.name,
+                    imageUrl = entity.imageUrl,
+                    types = emptyList(), height = 0, weight = 0, stats = emptyList(), description = "",
+                    captureLocation = entity.captureLocation
+                )
+            }
+        }
 
         Scaffold(
             bottomBar = {
@@ -93,22 +107,15 @@ fun App(database: AppDatabase) {
                             is PokedexUiState.Success -> {
                                 PokedexGridScreen(
                                     pokemons = state.pokemons,
-                                    onPokemonClick = { pokemonId ->
-                                        navController.navigate(PokemonDetailRoute(pokemonId))
-                                    },
-                                    onAddToTeam = { pokemon ->
-                                        if (myTeam.size < 6 && !myTeam.any { it.id == pokemon.id }) {
-                                            myTeam.add(pokemon)
-                                        }
-                                    },
-                                    isPokemonInTeam = { pokemonId ->
-                                        myTeam.any { it.id == pokemonId }
-                                    }
+                                    onPokemonClick = { pokemonId -> navController.navigate(PokemonDetailRoute(pokemonId)) },
+                                    onBackClick = { navController.popBackStack() },
+                                    onAddToTeam = { /* A listagem principal não adiciona direto */ },
+                                    isPokemonInTeam = { pokemonId -> myTeam.any { it.id == pokemonId } }
                                 )
                             }
                             is PokedexUiState.Error -> {
                                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                    Text("Erro: ${state.message}", color = MaterialTheme.colorScheme.error)
+                                    Text("Erro: ${state.message}")
                                 }
                             }
                         }
@@ -116,25 +123,26 @@ fun App(database: AppDatabase) {
 
                     composable<PokemonDetailRoute> { backStackEntry ->
                         val route = backStackEntry.toRoute<PokemonDetailRoute>()
-
-                        val dummyPokemon = Pokemon(
-                            id = route.pokemonId,
-                            name = "Carregando...",
-                            imageUrl = "",
-                            types = emptyList(), height = 0, weight = 0, stats = emptyList(), description = ""
-                        )
+                        val dummyPokemon = Pokemon(id = route.pokemonId, name = "Carregando...", imageUrl = "", types = emptyList(), height = 0, weight = 0, stats = emptyList(), description = "")
 
                         PokemonDetailScreen(
                             pokemon = dummyPokemon,
                             onBackClick = { navController.popBackStack() },
                             onAddToTeam = { p, location ->
-                                if (myTeam.size < 6 && p != null && !myTeam.any { it.id == p.id }) {
-                                    myTeam.add(p)
+                                if (myTeam.size < 6 && !myTeam.any { it.id == p.id }) {
+                                    coroutineScope.launch {
+                                        database.pokemonDao().addToTeam(
+                                            TeamPokemonEntity(
+                                                id = p.id,
+                                                name = p.name,
+                                                imageUrl = p.imageUrl,
+                                                captureLocation = location
+                                            )
+                                        )
+                                    }
                                 }
                             },
-                            isPokemonInTeam = { pokemonId ->
-                                myTeam.any { it.id == pokemonId }
-                            }
+                            isPokemonInTeam = { pokemonId -> myTeam.any { it.id == pokemonId } }
                         )
                     }
 
@@ -142,7 +150,9 @@ fun App(database: AppDatabase) {
                         TeamScreen(
                             team = myTeam,
                             onRemoveFromTeam = { pokemon ->
-                                myTeam.remove(pokemon)
+                                coroutineScope.launch {
+                                    database.pokemonDao().removeFromTeam(pokemon.id)
+                                }
                             }
                         )
                     }
