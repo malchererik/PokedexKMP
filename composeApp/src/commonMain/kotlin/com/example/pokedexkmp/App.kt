@@ -3,6 +3,8 @@ package com.example.pokedexkmp
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -74,11 +76,7 @@ fun App(database: AppDatabase) {
             ) {
                 NavHost(navController = navController, startDestination = PokedexRoute) {
 
-                    // ==========================================
-                    // TELA 1: A POKÉDEX (COM VIEWMODEL E SYNC!)
-                    // ==========================================
                     composable<PokedexRoute> {
-                        // O ViewModel "nasce" aqui e dispara a sincronização (Sync)
                         val viewModel = viewModel { PokedexViewModel(pokemonRepository) }
                         val uiState by viewModel.uiState.collectAsState()
 
@@ -94,11 +92,10 @@ fun App(database: AppDatabase) {
                             }
                             is PokedexUiState.Success -> {
                                 PokedexGridScreen(
-                                    pokemons = state.pokemons, // Lê os dados reais do banco
+                                    pokemons = state.pokemons,
                                     onPokemonClick = { pokemonId ->
                                         navController.navigate(PokemonDetailRoute(pokemonId))
                                     },
-                                    onBackClick = { navController.popBackStack() },
                                     onAddToTeam = { pokemon ->
                                         if (myTeam.size < 6 && !myTeam.any { it.id == pokemon.id }) {
                                             myTeam.add(pokemon)
@@ -117,13 +114,9 @@ fun App(database: AppDatabase) {
                         }
                     }
 
-                    // ==========================================
-                    // TELA 2: OS DETALHES (CHAMANDO A API)
-                    // ==========================================
                     composable<PokemonDetailRoute> { backStackEntry ->
                         val route = backStackEntry.toRoute<PokemonDetailRoute>()
 
-                        // Criamos um Pokémon falso só com o ID para a API saber quem buscar!
                         val dummyPokemon = Pokemon(
                             id = route.pokemonId,
                             name = "Carregando...",
@@ -134,7 +127,7 @@ fun App(database: AppDatabase) {
                         PokemonDetailScreen(
                             pokemon = dummyPokemon,
                             onBackClick = { navController.popBackStack() },
-                            onAddToTeam = { p ->
+                            onAddToTeam = { p, location ->
                                 if (myTeam.size < 6 && p != null && !myTeam.any { it.id == p.id }) {
                                     myTeam.add(p)
                                 }
@@ -145,9 +138,6 @@ fun App(database: AppDatabase) {
                         )
                     }
 
-                    // ==========================================
-                    // TELA 3: O TIME
-                    // ==========================================
                     composable<TeamRoute> {
                         TeamScreen(
                             team = myTeam,

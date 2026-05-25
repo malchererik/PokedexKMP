@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+
+
 sealed class PokedexUiState {
     object Loading : PokedexUiState()
     data class Success(val pokemons: List<Pokemon>) : PokedexUiState()
@@ -17,6 +19,12 @@ sealed class PokedexUiState {
 
 class PokedexViewModel(private val repository: PokemonRepositoryImpl) : ViewModel() {
 
+    private var currentOffset = 0
+    private val limit = 20
+    private var currentQuery = ""
+    private var isLastPage = false
+    private val allPokemons = mutableListOf<Pokemon>()
+
     private val _uiState = MutableStateFlow<PokedexUiState>(PokedexUiState.Loading)
     val uiState: StateFlow<PokedexUiState> = _uiState.asStateFlow()
 
@@ -24,19 +32,37 @@ class PokedexViewModel(private val repository: PokemonRepositoryImpl) : ViewMode
         loadPokemons()
     }
 
-    private fun loadPokemons() {
+    fun loadPokemons(query: String = currentQuery, reset: Boolean = false) {
         viewModelScope.launch {
-            _uiState.value = PokedexUiState.Loading
+            if (reset) {
+                currentOffset = 0
+                allPokemons.clear()
+                isLastPage = false
+                currentQuery = query
+                _uiState.value = PokedexUiState.Loading
+            }
+
+            if (isLastPage) return@launch
+
             try {
-                // 1. Verifica se precisa de baixar da internet
                 repository.syncPokemonsIfEmpty()
 
-                // 2. Fica a ouvir o banco de dados e atualiza a tela automaticamente!
-                repository.getPokemonListFlow().collect { pokemons ->
-                    _uiState.value = PokedexUiState.Success(pokemons)
+                // Busca a página atual direto do Room
+                val entities = repository.getPokemonsPaged(currentQuery, limit, currentOffset)
+
+                if (entities.isEmpty()) {
+                    isLastPage = true
+                } else {
+                    val newPokemons = entities.map {
+                        Pokemon(it.id, it.name, it.imageUrl, emptyList(), 0, 0, emptyList(), "")
+                    }
+                    allPokemons.addAll(newPokemons)
+                    currentOffset += limit
                 }
+
+                _uiState.value = PokedexUiState.Success(allPokemons.toList())
             } catch (e: Exception) {
-                _uiState.value = PokedexUiState.Error("Erro de conexão: ${e.message}")
+                _uiState.value = PokedexUiState.Error(e.message ?: "Erro desconhecido")
             }
         }
     }

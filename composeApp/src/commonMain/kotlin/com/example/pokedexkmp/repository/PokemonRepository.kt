@@ -47,4 +47,8 @@ class PokemonRepositoryImpl(
     suspend fun getPokemonById(id: Int): Pokemon? {
         return null
     }
+
+    suspend fun getPokemonsPaged(searchQuery: String, limit: Int, offset: Int): List<PokemonCacheEntity> {
+        return database.pokemonDao().getPokemonsPaged(searchQuery, limit, offset)
+    }
 }

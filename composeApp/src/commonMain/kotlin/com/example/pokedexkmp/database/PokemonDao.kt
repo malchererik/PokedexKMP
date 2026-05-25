@@ -9,6 +9,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface PokemonDao {
 
+    @Query("SELECT * FROM pokemon_cache WHERE name LIKE '%' || :searchQuery || '%' LIMIT :limit OFFSET :offset")
+    suspend fun getPokemonsPaged(searchQuery: String, limit: Int, offset: Int): List<PokemonCacheEntity>
+
     // OPERAÇÕES DO TIME (FAVORITOS)
     @Query("SELECT * FROM team_pokemon")
     fun getTeam(): Flow<List<TeamPokemonEntity>>

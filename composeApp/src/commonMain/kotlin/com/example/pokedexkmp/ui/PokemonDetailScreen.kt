@@ -22,13 +22,15 @@ import com.example.pokedexkmp.data.PokemonStat
 fun PokemonDetailScreen(
     pokemon: Pokemon?,
     onBackClick: () -> Unit,
-    onAddToTeam: (Pokemon) -> Unit,
+    onAddToTeam: (Pokemon, String) -> Unit,
     isPokemonInTeam: (Int) -> Boolean
 ) {
     // Variáveis de Estado para a API
     var pokemonApi by remember { mutableStateOf<Pokemon?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     val apiClient = remember { PokeApiClient() }
+    var showDialog by remember { mutableStateOf(false) }
+    var captureLocation by remember { mutableStateOf("") }
 
     // Efeito que roda assim que a tela abre
     LaunchedEffect(pokemon?.id) {
@@ -138,7 +140,7 @@ fun PokemonDetailScreen(
                 Spacer(modifier = Modifier.weight(1f))
 
                 Button(
-                    onClick = { if (!isInTeam) onAddToTeam(currentPokemon) },
+                    onClick = { if (!isInTeam) showDialog = true },
                     modifier = Modifier.fillMaxWidth().height(50.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isInTeam) Color.Gray else mainColor
@@ -153,5 +155,30 @@ fun PokemonDetailScreen(
                 }
             }
         }
+    }
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Local de Captura") },
+            text = {
+                OutlinedTextField(
+                    value = captureLocation,
+                    onValueChange = { captureLocation = it },
+                    label = { Text("Onde você o capturou?") },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                Button(onClick = {
+                    if (captureLocation.isNotBlank() && pokemon != null) {
+                        onAddToTeam(pokemon, captureLocation)
+                        showDialog = false
+                    }
+                }) { Text("Salvar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) { Text("Cancelar") }
+            }
+        )
     }
 }
