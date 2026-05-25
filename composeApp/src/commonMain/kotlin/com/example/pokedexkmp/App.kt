@@ -6,6 +6,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -28,6 +31,7 @@ import com.example.pokedexkmp.ui.PokedexGridScreen
 import com.example.pokedexkmp.ui.PokemonDetailScreen
 import com.example.pokedexkmp.ui.TeamScreen
 import kotlinx.coroutines.launch
+import kotlin.reflect.KClass
 
 @Composable
 fun App(database: AppDatabase) {
@@ -39,7 +43,6 @@ fun App(database: AppDatabase) {
         val pokemonRepository = remember { PokemonRepositoryImpl(database) }
         val coroutineScope = rememberCoroutineScope()
 
-        // Escuta os favoritos do Room em tempo real!
         val teamEntities by database.pokemonDao().getTeam().collectAsState(initial = emptyList())
         val myTeam = remember(teamEntities) {
             teamEntities.map { entity ->
@@ -91,7 +94,14 @@ fun App(database: AppDatabase) {
                 NavHost(navController = navController, startDestination = PokedexRoute) {
 
                     composable<PokedexRoute> {
-                        val viewModel = viewModel { PokedexViewModel(pokemonRepository) }
+                        val viewModel = viewModel<PokedexViewModel>(
+                            factory = object : ViewModelProvider.Factory {
+                                override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T {
+                                    return PokedexViewModel(pokemonRepository) as T
+                                }
+                            }
+                        )
+
                         val uiState by viewModel.uiState.collectAsState()
 
                         when (val state = uiState) {
@@ -109,8 +119,9 @@ fun App(database: AppDatabase) {
                                     pokemons = state.pokemons,
                                     onPokemonClick = { pokemonId -> navController.navigate(PokemonDetailRoute(pokemonId)) },
                                     onBackClick = { navController.popBackStack() },
-                                    onAddToTeam = { /* A listagem principal não adiciona direto */ },
-                                    isPokemonInTeam = { pokemonId -> myTeam.any { it.id == pokemonId } }
+                                    onAddToTeam = { _ -> },
+                                    isPokemonInTeam = { pokemonId -> myTeam.any { it.id == pokemonId } },
+                                    onSearch = { query -> viewModel.onSearchQueryChanged(query) }
                                 )
                             }
                             is PokedexUiState.Error -> {

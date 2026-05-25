@@ -3,13 +3,12 @@ package com.example.pokedexkmp.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pokedexkmp.data.Pokemon
-import com.example.pokedexkmp.repository.PokemonRepositoryImpl
+import com.example.pokedexkmp.repository.PokemonRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-
-
 
 sealed class PokedexUiState {
     object Loading : PokedexUiState()
@@ -17,52 +16,35 @@ sealed class PokedexUiState {
     data class Error(val message: String) : PokedexUiState()
 }
 
-class PokedexViewModel(private val repository: PokemonRepositoryImpl) : ViewModel() {
-
-    private var currentOffset = 0
-    private val limit = 20
-    private var currentQuery = ""
-    private var isLastPage = false
-    private val allPokemons = mutableListOf<Pokemon>()
+class PokedexViewModel(private val repository: PokemonRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow<PokedexUiState>(PokedexUiState.Loading)
     val uiState: StateFlow<PokedexUiState> = _uiState.asStateFlow()
 
+    private var searchJob: Job? = null
+
     init {
-        loadPokemons()
+        loadPokemons("")
     }
 
-    fun loadPokemons(query: String = currentQuery, reset: Boolean = false) {
-        viewModelScope.launch {
-            if (reset) {
-                currentOffset = 0
-                allPokemons.clear()
-                isLastPage = false
-                currentQuery = query
-                _uiState.value = PokedexUiState.Loading
-            }
+    fun onSearchQueryChanged(query: String) {
+        loadPokemons(query)
+    }
 
-            if (isLastPage) return@launch
-
+    private fun loadPokemons(query: String) {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
             try {
-                repository.syncPokemonsIfEmpty()
-
-                // Busca a página atual direto do Room
-                val entities = repository.getPokemonsPaged(currentQuery, limit, currentOffset)
-
-                if (entities.isEmpty()) {
-                    isLastPage = true
-                } else {
-                    val newPokemons = entities.map {
-                        Pokemon(it.id, it.name, it.imageUrl, emptyList(), 0, 0, emptyList(), "")
-                    }
-                    allPokemons.addAll(newPokemons)
-                    currentOffset += limit
+                if (query.isEmpty()) {
+                    _uiState.value = PokedexUiState.Loading
+                    repository.syncPokemonsIfEmpty()
                 }
 
-                _uiState.value = PokedexUiState.Success(allPokemons.toList())
+                repository.searchPokemonListFlow(query).collect { pokemons ->
+                    _uiState.value = PokedexUiState.Success(pokemons)
+                }
             } catch (e: Exception) {
-                _uiState.value = PokedexUiState.Error(e.message ?: "Erro desconhecido")
+                _uiState.value = PokedexUiState.Error("Erro no banco: ${e.message}")
             }
         }
     }

@@ -7,12 +7,23 @@ import com.example.pokedexkmp.database.PokemonCacheEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+// 1. A Interface (Arquitetura Limpa sugerida pelo AS Gemini)
+interface PokemonRepository {
+    suspend fun syncPokemonsIfEmpty()
+    fun searchPokemonListFlow(query: String = ""): Flow<List<Pokemon>>
+
+    // NOVO: Função de paginação
+    fun getPagedPokemonListFlow(limit: Int, offset: Int): Flow<List<Pokemon>>
+}
+
+// 2. A Implementação
 class PokemonRepositoryImpl(
     private val database: AppDatabase
-) {
+) : PokemonRepository {
+
     private val apiClient = PokeApiClient()
 
-    suspend fun syncPokemonsIfEmpty() {
+    override suspend fun syncPokemonsIfEmpty() {
         val count = database.pokemonDao().getCacheCount()
         if (count == 0) {
             val apiResponse = apiClient.getPokemonList(150)
@@ -23,26 +34,30 @@ class PokemonRepositoryImpl(
 
                 PokemonCacheEntity(id = id, name = resource.name, imageUrl = imageUrl)
             }
-
             database.pokemonDao().insertCache(entities)
         }
     }
 
-    fun getPokemonListFlow(): Flow<List<Pokemon>> {
-        return database.pokemonDao().getCache().map { entities ->
+    override fun searchPokemonListFlow(query: String): Flow<List<Pokemon>> {
+        return database.pokemonDao().searchPokemonCache(query).map { entities ->
             entities.map { entity ->
                 Pokemon(
-                    id = entity.id,
-                    name = entity.name,
-                    imageUrl = entity.imageUrl,
-                    types = emptyList(), height = 0, weight = 0, stats = emptyList(), description = "",
-                    captureLocation = ""
+                    id = entity.id, name = entity.name, imageUrl = entity.imageUrl,
+                    types = emptyList(), height = 0, weight = 0, stats = emptyList(), description = "", captureLocation = ""
                 )
             }
         }
     }
 
-    suspend fun getPokemonById(id: Int): Pokemon? {
-        return null
+    // NOVO: Executa a paginação no Room!
+    override fun getPagedPokemonListFlow(limit: Int, offset: Int): Flow<List<Pokemon>> {
+        return database.pokemonDao().getPagedCache(limit, offset).map { entities ->
+            entities.map { entity ->
+                Pokemon(
+                    id = entity.id, name = entity.name, imageUrl = entity.imageUrl,
+                    types = emptyList(), height = 0, weight = 0, stats = emptyList(), description = "", captureLocation = ""
+                )
+            }
+        }
     }
 }

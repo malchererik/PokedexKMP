@@ -9,10 +9,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-// 👇 AQUI ESTAVA O PROBLEMA! ESTES IMPORTS SÃO OBRIGATÓRIOS PARA O "by" FUNCIONAR 👇
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,167 +20,65 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.pokedexkmp.data.Pokemon
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PokedexGridScreen(
     pokemons: List<Pokemon>,
-    onPokemonClick: (Int) -> Unit,
+    onPokemonClick: (Int) -> Unit, // <-- CORREÇÃO: Agora espera o Int correto do ID!
+    onBackClick: () -> Unit,
     onAddToTeam: (Pokemon) -> Unit,
-    isPokemonInTeam: (Int) -> Boolean
+    isPokemonInTeam: (Int) -> Boolean,
+    onSearch: (String) -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
-    val filteredPokemons = remember(searchQuery, pokemons) {
-        pokemons.filter {
-            it.name.contains(searchQuery, ignoreCase = true) ||
-                    it.id.toString().contains(searchQuery)
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF5F5F5))
-            .padding(horizontal = 16.dp)
-    ) {
-        Text(
-            text = "POKÉDEX KMP",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 24.dp, bottom = 8.dp)
-        )
-
-        SearchBar(
-            query = searchQuery,
-            onQueryChange = { searchQuery = it },
-            onSearch = { },
-            active = false,
-            onActiveChange = { },
-            placeholder = { Text("Buscar por nome ou número...") },
-            leadingIcon = { Text("🔍", fontSize = 18.sp, modifier = Modifier.padding(start = 12.dp)) },
-            trailingIcon = {
-                if (searchQuery.isNotEmpty()) {
-                    Text(
-                        text = "❌",
-                        fontSize = 14.sp,
-                        modifier = Modifier
-                            .padding(end = 12.dp)
-                            .clickable { searchQuery = "" }
-                    )
-                }
-            },
+    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF5F5F5))) {
+        // HEADER
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = SearchBarDefaults.colors(containerColor = Color.White)
+                .background(Color(0xFFE57373))
+                .padding(top = 40.dp, bottom = 16.dp, start = 16.dp, end = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            IconButton(onClick = onBackClick) { Text("⬅️", fontSize = 24.sp) }
+            Text("POKÉDEX", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp, modifier = Modifier.padding(start = 16.dp))
         }
 
+        // BARRA DE PESQUISA (SearchBar)
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = {
+                searchQuery = it
+                onSearch(it) // Dispara a busca SQL!
+            },
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            placeholder = { Text("Buscar Pokémon no Banco...") },
+            shape = RoundedCornerShape(25.dp),
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedBorderColor = Color(0xFFE57373)
+            )
+        )
+
+        // GRID DE POKÉMONS
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 80.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
+            contentPadding = PaddingValues(bottom = 16.dp)
         ) {
-            items(filteredPokemons) { pokemon ->
-                PokemonGridItem(
-                    pokemon = pokemon,
-                    onClick = { onPokemonClick(pokemon.id) },
-                    onAddClick = { onAddToTeam(pokemon) },
-                    isInTeam = isPokemonInTeam(pokemon.id)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PokemonGridItem(
-    pokemon: Pokemon,
-    onClick: () -> Unit,
-    onAddClick: () -> Unit,
-    isInTeam: Boolean
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Box(
-                modifier = Modifier.fillMaxWidth().height(100.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                AsyncImage(
-                    model = pokemon.imageUrl,
-                    contentDescription = pokemon.name,
-                    modifier = Modifier.size(90.dp)
-                )
-            }
-
-            Text(
-                text = pokemon.name.capitalizePokemonName(),
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                color = Color.Black
-            )
-
-            Text(
-                text = pokemon.id.formatPokemonNumber(),
-                fontSize = 12.sp,
-                color = Color.Gray,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth().height(26.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                pokemon.types.forEach { type ->
-                    Box(
-                        modifier = Modifier
-                            .padding(horizontal = 3.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(getPokemonTypeColor(type))
-                            .padding(horizontal = 6.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = translateType(type),
-                            color = Color.White,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+            items(pokemons) { pokemon ->
+                Card(
+                    modifier = Modifier.padding(8.dp).fillMaxWidth().height(180.dp).clickable { onPokemonClick(pokemon.id) },
+                    shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize().padding(8.dp)) {
+                        Text(text = pokemon.id.formatPokemonNumber(), color = Color.Gray, fontSize = 12.sp, modifier = Modifier.align(Alignment.End))
+                        AsyncImage(model = pokemon.imageUrl, contentDescription = pokemon.name, modifier = Modifier.size(100.dp))
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(text = pokemon.name.capitalizePokemonName(), fontWeight = FontWeight.Bold, fontSize = 16.sp, textAlign = TextAlign.Center)
                     }
                 }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Button(
-                onClick = { if (!isInTeam) onAddClick() },
-                modifier = Modifier.fillMaxWidth().height(36.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isInTeam) Color.Gray else Color(0xFF81C784)
-                ),
-                contentPadding = PaddingValues(0.dp)
-            ) {
-                Text(
-                    text = if (isInTeam) "ADICIONADO" else "ADICIONAR AO TIME",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    textAlign = TextAlign.Center
-                )
             }
         }
     }
