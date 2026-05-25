@@ -69,7 +69,7 @@ class PokedexViewModel(private val repository: PokemonRepositoryImpl) : ViewMode
     }
 
     private suspend fun fetchPage() {
-        // Busca do Room usando o LIMIT e OFFSET feito pelo seu amigo
+        // Busca do Room usando o LIMIT e OFFSET
         val entities = repository.getPokemonsPaged(currentQuery, pageSize, currentOffset)
 
         if (entities.isEmpty()) {

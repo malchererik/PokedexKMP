@@ -51,8 +51,8 @@ fun PokedexGridScreen(
             // CORREÇÃO: A seta de voltar agora limpa a pesquisa se ela estiver ativa!
             IconButton(onClick = {
                 if (searchQuery.isNotEmpty()) {
-                    searchQuery = "" // Limpa o texto da tela
-                    onSearch("")     // Avisa o banco de dados para trazer todos de volta
+                    searchQuery = ""
+                    onSearch("")
                 } else {
                     onBackClick()
                 }

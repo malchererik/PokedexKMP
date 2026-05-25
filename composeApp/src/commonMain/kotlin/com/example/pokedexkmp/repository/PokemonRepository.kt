@@ -7,7 +7,7 @@ import com.example.pokedexkmp.database.PokemonCacheEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-// 1. A Interface (Arquitetura Limpa sugerida pelo AS Gemini)
+// 1. A Interface
 interface PokemonRepository {
     suspend fun syncPokemonsIfEmpty()
     fun searchPokemonListFlow(query: String = ""): Flow<List<Pokemon>>
@@ -25,15 +25,20 @@ class PokemonRepositoryImpl(
     override suspend fun syncPokemonsIfEmpty() {
         val count = database.pokemonDao().getCacheCount()
         if (count == 0) {
-            val apiResponse = apiClient.getPokemonList(150)
+            try {
+                val apiResponse = apiClient.getPokemonList(150)
 
-            val entities = apiResponse.results.mapNotNull { resource ->
-                val id = resource.url.trimEnd('/').substringAfterLast('/').toIntOrNull() ?: return@mapNotNull null
-                val imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png"
+                val entities = apiResponse.results.mapNotNull { resource ->
+                    val id = resource.url.trimEnd('/').substringAfterLast('/').toIntOrNull() ?: return@mapNotNull null
+                    val imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png"
 
-                PokemonCacheEntity(id = id, name = resource.name, imageUrl = imageUrl)
+                    PokemonCacheEntity(id = id, name = resource.name, imageUrl = imageUrl)
+                }
+                database.pokemonDao().insertCache(entities)
+            } catch (e: Exception) {
+                // Tratamento de erro básico
+                println("Erro ao sincronizar Pokémons: ${e.message}")
             }
-            database.pokemonDao().insertCache(entities)
         }
     }
 
@@ -48,7 +53,7 @@ class PokemonRepositoryImpl(
         }
     }
 
-    // NOVO: Executa a paginação no Room!
+    // Executa a paginação no Room
     override fun getPagedPokemonListFlow(limit: Int, offset: Int): Flow<List<Pokemon>> {
         return database.pokemonDao().getPagedCache(limit, offset).map { entities ->
             entities.map { entity ->

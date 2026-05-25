@@ -58,7 +58,7 @@ fun PokemonDetailScreen(
                 )
             } catch (e: Exception) {
                 println("Erro ao carregar da API: ${e.message}")
-                hasError = true // Ativa a tela de erro!
+                hasError = true // Ativa a tela de erro
             } finally {
                 isLoading = false
             }
@@ -153,7 +153,7 @@ fun PokemonDetailScreen(
                     )
                     Spacer(modifier = Modifier.height(32.dp))
                     Button(
-                        onClick = { retryTrigger++ }, // Tenta novamente!
+                        onClick = { retryTrigger++ }, // Tenta novamente
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE57373))
                     ) {
                         Text("Tentar Novamente", color = Color.White)

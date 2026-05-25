@@ -19,7 +19,7 @@ interface PokemonDao {
     @Query("SELECT * FROM pokemon_cache")
     fun getCache(): Flow<List<PokemonCacheEntity>>
 
-    // NOVO: Paginação exigida pelo professor!
+    // NOVO: Paginação exigida
     @Query("SELECT * FROM pokemon_cache LIMIT :limit OFFSET :offset")
     fun getPagedCache(limit: Int, offset: Int): Flow<List<PokemonCacheEntity>>
 

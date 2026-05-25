@@ -35,7 +35,7 @@ class PokeApiClient {
 @Serializable
 data class PokemonListResponseDto(val results: List<NamedApiResourceDto>)
 
-// (Os outros DTOs continuam iguais, apenas adicione a 'url' no NamedApiResourceDto)
+// Os outros DTOs continuam iguais
 @Serializable
 data class PokemonDto(val id: Int, val name: String, val height: Int, val weight: Int, val sprites: SpritesDto, val types: List<TypeSlotDto>, val stats: List<StatSlotDto>)
 
